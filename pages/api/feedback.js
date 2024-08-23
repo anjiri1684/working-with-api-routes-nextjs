@@ -1,6 +1,21 @@
 import fs from "node:fs";
 import path from "path";
 
+export function buildFeedbackPath() {
+  return path.join(process.cwd(), "data", "feedback.json");
+}
+
+export function extractFeedback(filePath) {
+  let data;
+  try {
+    const fileData = fs.readFileSync(filePath);
+    data = JSON.parse(fileData);
+  } catch (error) {
+    data = []; // Initialize with an empty array if the file doesn't exist or is empty
+  }
+  return data;
+}
+
 function handler(req, res) {
   if (req.method === "POST") {
     const email = req.body.email;
@@ -11,14 +26,16 @@ function handler(req, res) {
       email: email,
       text: feedbackText,
     };
-    const filePath = path.join(process.cwd(), "data", "feedback.json");
-    const fileData = fs.readFileSync(filePath);
-    const data = JSON.parse(fileData);
+
+    const filePath = buildFeedbackPath();
+    const data = extractFeedback(filePath);
     data.push(newFeedBack);
     fs.writeFileSync(filePath, JSON.stringify(data));
     res.status(201).json({ message: "Success", feedback: newFeedBack });
   } else {
-    res.status(200).json({ message: "This works" });
+    const filePath = buildFeedbackPath();
+    const data = extractFeedback(filePath);
+    res.status(200).json({ feedback: data });
   }
 }
 
